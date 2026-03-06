@@ -85,7 +85,7 @@
     <!-- ECRAN DE SECOURS ANTI-PAGE BLANCHE -->
     <div id="fallback-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; text-align: center; font-family: sans-serif; background-color: #FFFDF9;">
         <h1 style="color: #F7784A; font-size: 2rem; margin-bottom: 1rem; text-transform: uppercase; font-weight: bold;">Démarrage...</h1>
-        <p id="fallback-text" style="color: #9F512A; max-width: 400px; line-height: 1.5;">Veuillez patienter, l'application se charge.</p>
+        <p id="fallback-text" style="color: #9F512A; max-width: 400px; line-height: 1.5;">Veuillez patienter, installation des instruments</p>
     </div>
 
     <div id="root"></div>
@@ -563,7 +563,7 @@ CONSIGNES OBLIGATOIRES :
                                     <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
                                         <section>
                                             <h4 className="text-[12px] font-black text-brand-brown mb-8 uppercase tracking-[0.3em] flex items-center gap-3">
-                                                <span className="w-3 h-3 rounded-full bg-brand-yellow shadow-sm animate-pulse"></span> Portugais
+                                                <span className="w-3 h-3 rounded-full bg-brand-yellow shadow-sm animate-pulse"></span> Paroles
                                             </h4>
                                             <div className="whitespace-pre-wrap text-xl font-bold text-neutral-800 leading-relaxed p-10 rounded-[3rem] bg-brand-yellow/5 border border-brand-yellow/10 shadow-inner">{currentSong.lyrics}</div>
                                         </section>
@@ -610,7 +610,7 @@ CONSIGNES OBLIGATOIRES :
 
                                     <div className="space-y-12">
                                         <div className="relative">
-                                            <label className="text-[11px] font-black text-brand-brown uppercase mb-4 block tracking-[0.3em]">Titre du chant (ou fragment connu)</label>
+                                            <label className="text-[11px] font-black text-brand-brown uppercase mb-4 block tracking-[0.3em]">Titre du chant (ou fragment connu version yogourt)</label>
                                             <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full p-8 bg-neutral-50 rounded-[2.5rem] outline-none font-display font-bold text-4xl focus:ring-8 focus:ring-brand-yellow/10 transition-all border border-neutral-100 shadow-inner text-neutral-800 veneer-title leading-none" placeholder="Ex: Mandei benzer..." />
                                         </div>
                                         
@@ -633,7 +633,7 @@ CONSIGNES OBLIGATOIRES :
 
                                         <div className="grid md:grid-cols-2 gap-12">
                                             <div>
-                                                <label className="text-[11px] font-black text-brand-yellow uppercase mb-4 block tracking-[0.4em] bg-brand-yellow/10 w-max px-5 py-1.5 rounded-full shadow-sm">Portugais</label>
+                                                <label className="text-[11px] font-black text-brand-yellow uppercase mb-4 block tracking-[0.4em] bg-brand-yellow/10 w-max px-5 py-1.5 rounded-full shadow-sm">Paroles</label>
                                                 <textarea rows={14} placeholder="Saisissez les paroles..." value={formData.lyrics} onChange={e => setFormData({...formData, lyrics: e.target.value})} className="w-full p-8 bg-neutral-50 rounded-[3.5rem] font-bold text-lg outline-none focus:bg-white border border-neutral-100 transition-all resize-none shadow-inner" />
                                             </div>
                                             <div>
@@ -648,7 +648,7 @@ CONSIGNES OBLIGATOIRES :
                                         </div>
 
                                         <div className="bg-red-50/30 p-8 rounded-[3rem] border border-red-100 shadow-inner">
-                                            <label className="text-[11px] font-black text-red-500 uppercase mb-4 block tracking-[0.3em] flex items-center gap-3"><Icon name="youtube" className="w-5 h-5"/> Vidéo YouTube de référence</label>
+                                            <label className="text-[11px] font-black text-red-500 uppercase mb-4 block tracking-[0.3em] flex items-center gap-3"><Icon name="youtube" className="w-5 h-5"/> Vidéo YouTube ou lien de référence</label>
                                             <input type="url" value={formData.youtubeLink} onChange={e => setFormData({...formData, youtubeLink: e.target.value})} placeholder="https://youtube.com/watch?v=..." className="w-full p-6 bg-white rounded-[2rem] outline-none text-sm font-bold border border-red-100 shadow-sm focus:ring-4 focus:ring-red-200/20 transition-all" />
                                         </div>
                                     </div>
@@ -664,7 +664,7 @@ CONSIGNES OBLIGATOIRES :
 
                     <footer className="mt-20 py-16 text-center text-neutral-300 no-print border-t-2 border-neutral-50">
                         <div className="w-24 h-2 brand-gradient mx-auto rounded-full mb-10 shadow-inner opacity-20"></div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.8em] text-brand-brown/30 leading-loose">Senzala Villefranche • Carnet de chants 2026<br/>Patrimoine Capoeira</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.8em] text-brand-brown/30 leading-loose">Senzala Villefranche • Carnet de chants 2026<br/>By Flecha</p>
                     </footer>
                 </div>
             );
