@@ -191,12 +191,11 @@
                 const initAuth = async () => {
                     if (!auth) return;
                     try {
-                        // Connexion anonyme (utile si vos règles Firestore l'exigent)
+                        // Connexion anonyme directe sur votre projet Firebase
                         await auth.signInAnonymously();
                     } catch (e) {
                         console.error("Auth error", e);
-                        // On ne bloque PAS l'application ici si l'auth échoue
-                        // La base de données est peut-être en accès public.
+                        // On ne bloque PAS l'application ici
                     }
                 };
                 initAuth();
@@ -208,7 +207,7 @@
 
             // --- SYNCHRONISATION DES CHANTS ---
             useEffect(() => {
-                if (!db) return; // On ne bloque plus sur "user" !
+                if (!db) return; 
                 
                 const songsCollection = db.collection(dbCollectionName);
                 const unsubscribe = songsCollection.onSnapshot(
@@ -225,6 +224,23 @@
                 );
                 return () => unsubscribe();
             }, []);
+
+            // --- GESTION DES CLICS SÉCURISÉE (Cocher Livret) ---
+            const handleCardClick = (song) => {
+                if (isSelectionMode) {
+                    setSelectedSongs(prev => {
+                        // Si le chant est déjà dans le tableau, on le retire, sinon on l'ajoute
+                        if (prev.includes(song.id)) {
+                            return prev.filter(id => id !== song.id);
+                        } else {
+                            return [...prev, song.id];
+                        }
+                    });
+                } else {
+                    setCurrentSong(song);
+                    setView('detail');
+                }
+            };
 
             // --- IA VIA GOOGLE APPS SCRIPT ---
             const handleGenerateAI = async () => {
@@ -253,10 +269,8 @@
 
                 const userQuery = `Recherche authentique pour le chant de capoeira : "${formData.title}"`;
                 
-                // Préparation de la question complète envoyée au script
                 const maQuestion = `${systemPrompt}\n\nRecherche pour : ${userQuery}`;
                 
-                // Vérification si le script GAS est configuré, sinon on utilise l'API directe en fallback
                 const useGoogleAppsScript = GOOGLE_APPS_SCRIPT_URL && !GOOGLE_APPS_SCRIPT_URL.includes("XXXXX");
 
                 const fetchWithRetry = async (retries = 3) => {
@@ -270,18 +284,15 @@
                                 let response;
                                 
                                 if (useGoogleAppsScript) {
-                                    // APPEL VIA VOTRE SCRIPT GAS SÉCURISÉ
                                     response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                                         method: 'POST',
-                                        // text/plain est recommandé pour éviter les requêtes preflight CORS bloquées par GAS
                                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                                         body: JSON.stringify({ 
                                             prompt: maQuestion,
-                                            model: model // Votre script GAS peut utiliser ce paramètre pour le payload Gemini
+                                            model: model 
                                         })
                                     });
                                 } else {
-                                    // FALLBACK DIRECT API SI LE SCRIPT N'EST PAS PRÊT
                                     const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${fallbackEnvApiKey}`;
                                     response = await fetch(directUrl, {
                                         method: 'POST',
@@ -296,19 +307,17 @@
                                 if (!response.ok) {
                                     if (response.status === 429 && i < retries) {
                                         await new Promise(r => setTimeout(r, delays[i]));
-                                        continue; // Réessai pour quota
+                                        continue; 
                                     }
-                                    if (response.status === 404) break; // Modèle non trouvé, on passe au suivant
+                                    if (response.status === 404) break; 
                                     throw new Error(`HTTP ${response.status}`);
                                 }
 
                                 const result = await response.json();
                                 
-                                // Extraction robuste : gère la réponse directe Gemini ou la réponse parsée du GAS
                                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text || result.text || result.response;
                                 
                                 if (text) {
-                                    // Nettoyage agressif des balises markdown que l'IA ajoute parfois
                                     const cleanText = text.replace(/```json/gi, '').replace(/```/gi, '').trim();
                                     const firstBrace = cleanText.indexOf('{');
                                     const lastBrace = cleanText.lastIndexOf('}');
@@ -327,13 +336,13 @@
                                             note: data.note || prev.note,
                                             youtubeLink: data.youtubeLink || data.lien || prev.youtubeLink
                                         }));
-                                        return true; // Succès !
+                                        return true; 
                                     }
                                 }
                             } catch (e) {
                                 if (i === retries) {
                                     console.warn(`Le modèle ${model} a échoué. Passage au modèle suivant.`);
-                                    break; // On passe au modèle suivant dans la boucle principale
+                                    break; 
                                 }
                                 await new Promise(r => setTimeout(r, delays[i]));
                             }
@@ -412,7 +421,7 @@
             if (loading) return (
                 <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFFDF9] p-6 text-center text-brand-brown">
                     <div className="loader mb-6 shadow-sm"></div>
-                    <p className="font-display tracking-[0.2em] uppercase text-sm animate-pulse text-brand-coral">Connexion carnet de chant Senzala...</p>
+                    <p className="font-display tracking-[0.2em] uppercase text-sm animate-pulse text-brand-coral">Connexion Acervo Senzala...</p>
                 </div>
             );
 
@@ -535,7 +544,7 @@
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                     {filteredAndSortedSongs.map(s => (
-                                        <div key={s.id} onClick={() => isSelectionMode ? toggleSelection(s.id) : (setCurrentSong(s), setView('detail'))}
+                                        <div key={s.id} onClick={() => handleCardClick(s)}
                                              className={`bg-white p-8 rounded-[3rem] shadow-sm border-2 transition-all cursor-pointer relative group flex flex-col h-full card-hover ${isSelectionMode && selectedSongs.includes(s.id) ? 'border-brand-yellow bg-brand-yellow/5 scale-[0.97]' : 'border-transparent hover:border-brand-yellow/30'}`}>
                                             <div className="flex justify-between items-start mb-6">
                                                 <span className="px-3 py-1 bg-brand-yellow/10 text-brand-brown text-[9px] font-black uppercase tracking-[0.2em] rounded-lg border border-brand-yellow/20">{s.songType}</span>
@@ -617,11 +626,10 @@
 
                                         <div className="brand-gradient p-10 rounded-[3.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group">
                                             <div className="relative z-10 flex-1 text-center md:text-left">
-                                                <h4 className="font-display font-bold text-4xl text-white tracking-wide flex items-center justify-center md:justify-start gap-3 veneer-title leading-none text-white text-balance leading-none uppercase font-bold">Connexion Sécurisée IA <span className="animate-pulse text-brand-yellow">✨</span></h4>
-                                                <p className="text-[14px] opacity-90 font-medium leading-relaxed mt-4 max-w-md">L'IA travaille pour toi</p>
+                                                <h4 className="font-display font-bold text-4xl text-white tracking-wide flex items-center justify-center md:justify-start gap-3 veneer-title text-balance leading-none uppercase font-bold">Lancement de l'IA <span className="animate-pulse text-brand-yellow">✨</span></h4>
                                             </div>
                                             <button type="button" onClick={handleGenerateAI} disabled={aiLoading || !formData.title} className="bg-white text-brand-coral px-12 py-5 rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 disabled:opacity-50 min-w-[200px] transition-all hover:scale-105">
-                                                {aiLoading ? <span className="flex items-center gap-3"><div className="loader border-brand-coral"></div>{aiStatus}</span> : "Générer via Script"}
+                                                {aiLoading ? <span className="flex items-center gap-3"><div className="loader border-brand-coral"></div>{aiStatus}</span> : "C'est parti !!!"}
                                             </button>
                                         </div>
                                         
