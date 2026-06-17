@@ -37,10 +37,10 @@
         }
     </script>
     
-    <!-- React & Babel -->
+    <!-- React & Babel (Version verrouillée pour stabilité) -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
 
     <!-- Firebase SDK (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
@@ -91,6 +91,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        /** @jsx React.createElement */
+        /** @jsxFrag React.Fragment */
+
         // --- CONFIGURATION IA SÉCURISÉE (VIA GOOGLE APPS SCRIPT) ---
         // Remplacez 'XXXXX' par l'identifiant réel de votre script de déploiement
         const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxc48_A-pg9JRW_Kjci5D4ROY3a6FYOMlUocWvadnrP3okBMh4KHh4l_n-s10uOhDEsg/exec"; 
@@ -137,8 +140,8 @@
         // Collection directe pour votre projet personnel
         const dbCollectionName = "songs"; 
 
-        const SONG_TYPES = ["Corrido", "Ladainha", "Chula / Louvação", "Quadra", "Maculelê", "Puxada de Rede", "Samba de Roda", "Traditionels", "Autre"];
-        const RHYTHMS = ["Angola", "Benguela", "São Bento Grande", "Iuna", "Puxada", "Barravento", "Ijexa" , "Congo de ouro", "Autre"];
+        const SONG_TYPES = ["Corrido", "Ladainha", "Chula / Louvação", "Quadra", "Maculelê", "Puxada de Rede", "Samba de Roda", "Autre"];
+        const RHYTHMS = ["Angola", "Benguela", "São Bento Grande", "Iuna", "Regional", "Libre", "Puxada"];
 
         const Icon = ({ name, className = "w-5 h-5" }) => {
             const icons = {
@@ -201,6 +204,7 @@
                 initAuth();
                 const unsubscribe = auth.onAuthStateChanged(u => { 
                     setUser(u); 
+                    if(u) setLoading(false);
                 });
                 return () => unsubscribe();
             }, []);
@@ -253,7 +257,7 @@
                 Identifie et recherche le chant : "${formData.title}".
                 RÈGLES ABSOLUES ET STRICTES :
                 1. Utilise tes outils de recherche Google pour trouver les paroles réelles et authentiques.
-                2. N'INVENTE JAMAIS DE PAROLES. Si ta recherche ne donne aucun résultat probant pour ce chant précis, écris EXACTEMENT "Chanson non trouvée" dans les champs "lyrics" et "translation", donne la traduction en français.
+                2. N'INVENTE JAMAIS DE PAROLES. Si ta recherche ne donne aucun résultat probant pour ce chant précis, écris EXACTEMENT "Chanson non trouvée" dans les champs "lyrics" et "translation".
                 3. CORRIGE le titre si tu trouves la bonne orthographe.
                 4. Trouve l'histoire ou le contexte.
                 Réponds EXCLUSIVEMENT avec le format JSON exact suivant (sans balises markdown) :
@@ -264,7 +268,7 @@
                   "songType": "Style",
                   "rhythm": "Rythme",
                   "note": "Note historique...",
-                  "youtubeLink": "Lien URL music.youtube avec la chanson ou le lien music.youtube renvoyant au résultat de la recherche avec le titre corrigé"
+                  "youtubeLink": "Lien URL"
                 }`;
 
                 const userQuery = `Recherche authentique pour le chant de capoeira : "${formData.title}"`;
@@ -626,7 +630,7 @@
 
                                         <div className="brand-gradient p-10 rounded-[3.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group">
                                             <div className="relative z-10 flex-1 text-center md:text-left">
-                                                <h4 className="font-display font-bold text-4xl text-white tracking-wide flex items-center justify-center md:justify-start gap-3 veneer-title text-balance leading-none uppercase font-bold">Lancement de l'IA <span className="animate-pulse text-brand-yellow">✨</span></h4>
+                                                <h4 className="font-display font-bold text-4xl text-white tracking-wide flex items-center justify-center md:justify-start gap-3 veneer-title leading-none text-white text-balance leading-none uppercase font-bold">Lancement de l'IA <span className="animate-pulse text-brand-yellow">✨</span></h4>
                                             </div>
                                             <button type="button" onClick={handleGenerateAI} disabled={aiLoading || !formData.title} className="bg-white text-brand-coral px-12 py-5 rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 disabled:opacity-50 min-w-[200px] transition-all hover:scale-105">
                                                 {aiLoading ? <span className="flex items-center gap-3"><div className="loader border-brand-coral"></div>{aiStatus}</span> : "C'est parti !!!"}
@@ -652,7 +656,7 @@
 
                                         <div className="grid md:grid-cols-2 gap-12">
                                             <div>
-                                                <label className="text-[11px] font-black text-brand-yellow uppercase mb-4 block tracking-[0.4em] bg-brand-yellow/10 w-max px-5 py-1.5 rounded-full shadow-sm">Paroles</label>
+                                                <label className="text-[11px] font-black text-brand-yellow uppercase mb-4 block tracking-[0.4em] bg-brand-yellow/10 w-max px-5 py-1.5 rounded-full shadow-sm">Parole</label>
                                                 <textarea rows={14} placeholder="Paroles originales..." value={formData.lyrics} onChange={e => setFormData({...formData, lyrics: e.target.value})} className="w-full p-8 bg-neutral-50 rounded-[3.5rem] font-bold text-lg outline-none focus:bg-white border border-neutral-100 transition-all resize-none shadow-inner scrollbar-hide" />
                                             </div>
                                             <div>
