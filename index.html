@@ -37,15 +37,15 @@
         }
     </script>
     
-    <!-- React & Babel (Version verrouillée pour stabilité) -->
+    <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
 
-    <!-- Firebase SDK (Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK (Compat mode) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
         body { background-color: #FFFDF9; color: #1f2937; -webkit-tap-highlight-color: transparent; }
@@ -85,7 +85,7 @@
 <body>
     <div id="fallback-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; text-align: center; font-family: sans-serif; background-color: #FFFDF9;">
         <h1 style="color: #F7784A; font-size: 2.5rem; margin-bottom: 1rem; text-transform: uppercase; font-weight: 800; letter-spacing: -0.05em;">Senzala</h1>
-        <p id="fallback-text" style="color: #9F512A; max-width: 400px; line-height: 1.5; font-weight: 600;">Authentification sécurisée...</p>
+        <p id="fallback-text" style="color: #9F512A; max-width: 400px; line-height: 1.5; font-weight: 600;">Chargement sécurisé...</p>
     </div>
 
     <div id="root"></div>
@@ -95,13 +95,9 @@
         /** @jsxFrag React.Fragment */
 
         // --- CONFIGURATION IA SÉCURISÉE (VIA GOOGLE APPS SCRIPT) ---
-        // Remplacez 'XXXXX' par l'identifiant réel de votre script de déploiement
-        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxc48_A-pg9JRW_Kjci5D4ROY3a6FYOMlUocWvadnrP3okBMh4KHh4l_n-s10uOhDEsg/exec"; 
-        
-        // Utilisée uniquement en secours si le script GAS n'est pas encore configuré
+        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/XXXXX/exec"; 
         const fallbackEnvApiKey = ""; 
         
-        // Liste des modèles demandés
         const MODELS_TO_TEST = [
             "gemini-2.5-flash-preview-09-2025",
             "gemini-2.5-flash",
@@ -137,7 +133,6 @@
             console.error("Firebase Init Error:", e);
         }
 
-        // Collection directe pour votre projet personnel
         const dbCollectionName = "songs"; 
 
         const SONG_TYPES = ["Corrido", "Ladainha", "Chula / Louvação", "Quadra", "Maculelê", "Puxada de Rede", "Samba de Roda", "Autre"];
@@ -157,6 +152,7 @@
                 back: <><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></>,
                 alert: <><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></>,
                 save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></>,
+                sort: <><line x1="3" y1="6" x2="15" y2="6"></line><line x1="3" y1="12" x2="11" y2="12"></line><line x1="3" y1="18" x2="13" y2="18"></line><polyline points="16 14 20 18 24 14"></polyline><line x1="20" y1="6" x2="20" y2="18"></line></>,
                 star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
             };
             return (
@@ -185,20 +181,21 @@
             const [selectedSongs, setSelectedSongs] = useState([]);
             const [showConfirmDelete, setShowConfirmDelete] = useState(null);
             
-            // --- GESTION DES FAVORIS ---
+            // --- GESTION DES FAVORIS LOCAUX ---
             const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
             const [favorites, setFavorites] = useState(() => {
-                const saved = localStorage.getItem('senzala_favorites');
-                return saved ? JSON.parse(saved) : [];
+                try {
+                    const saved = localStorage.getItem('senzala_favorites');
+                    return saved ? JSON.parse(saved) : [];
+                } catch(e) { return []; }
             });
 
-            // Sauvegarder les favoris localement à chaque modification
             useEffect(() => {
                 localStorage.setItem('senzala_favorites', JSON.stringify(favorites));
             }, [favorites]);
 
             const toggleFavorite = (e, id) => {
-                e.stopPropagation(); // Évite de cliquer sur la carte ou de sélectionner pour le PDF en même temps
+                e.stopPropagation(); // Évite d'ouvrir le chant ou de le cocher quand on clique sur l'étoile
                 setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
             };
 
@@ -212,17 +209,15 @@
                 const initAuth = async () => {
                     if (!auth) return;
                     try {
-                        // Connexion anonyme directe sur votre projet Firebase
                         await auth.signInAnonymously();
                     } catch (e) {
                         console.error("Auth error", e);
-                        // On ne bloque PAS l'application ici
                     }
                 };
                 initAuth();
                 const unsubscribe = auth.onAuthStateChanged(u => { 
                     setUser(u); 
-                    if(u) setLoading(false);
+                    if(u) setLoading(false); 
                 });
                 return () => unsubscribe();
             }, []);
@@ -247,22 +242,32 @@
                 return () => unsubscribe();
             }, []);
 
-            // --- GESTION DES CLICS SÉCURISÉE (Cocher Livret) ---
+            // --- GESTION DES CLICS ---
             const handleCardClick = (song) => {
                 if (isSelectionMode) {
-                    setSelectedSongs(prev => {
-                        // Si le chant est déjà dans le tableau, on le retire, sinon on l'ajoute
-                        if (prev.includes(song.id)) {
-                            return prev.filter(id => id !== song.id);
-                        } else {
-                            return [...prev, song.id];
-                        }
-                    });
+                    setSelectedSongs(prev => prev.includes(song.id) ? prev.filter(id => id !== song.id) : [...prev, song.id]);
                 } else {
                     setCurrentSong(song);
                     setView('detail');
                 }
             };
+
+            // --- FILTRAGE ET TRI ---
+            const filteredAndSortedSongs = useMemo(() => {
+                let res = songs.filter(s => 
+                    (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    (s.lyrics || "").toLowerCase().includes(searchTerm.toLowerCase())) &&
+                    (!selectedType || s.songType === selectedType) &&
+                    (!showOnlyFavorites || favorites.includes(s.id))
+                );
+                return res.sort((a, b) => {
+                    if (sortBy === 'title_asc') return (a.title || "").localeCompare(b.title || "");
+                    if (sortBy === 'title_desc') return (b.title || "").localeCompare(a.title || "");
+                    if (sortBy === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+                    return 0;
+                });
+            }, [songs, searchTerm, selectedType, sortBy, showOnlyFavorites, favorites]);
+
 
             // --- IA VIA GOOGLE APPS SCRIPT ---
             const handleGenerateAI = async () => {
@@ -272,27 +277,25 @@
                 setError(null);
 
                 const systemPrompt = `Tu es l'expert archiviste de la Capoeira Senzala.
-                Identifie et recherche le chant : "${formData.title}".
+                Identifie et complète le chant : "${formData.title}".
                 RÈGLES ABSOLUES ET STRICTES :
-                1. Utilise tes outils de recherche Google pour trouver les paroles réelles et authentiques.
-                2. N'INVENTE JAMAIS DE PAROLES. Si ta recherche ne donne aucun résultat probant pour ce chant précis, écris EXACTEMENT "Chanson non trouvée" dans les champs "lyrics" et "translation".
-                3. CORRIGE le titre si tu trouves la bonne orthographe.
+                1. CORRIGE le titre si nécessaire.
+                2. Tu DOIS ABSOLUMENT fournir les paroles (PT). NE RENVOIE JAMAIS CE CHAMP VIDE. Si ta recherche web ne donne rien, utilise ta mémoire d'expert.
+                3. Tu DOIS ABSOLUMENT donner une traduction française. NE LAISSE JAMAIS CE CHAMP VIDE.
                 4. Trouve l'histoire ou le contexte.
                 Réponds EXCLUSIVEMENT avec le format JSON exact suivant (sans balises markdown) :
                 {
                   "title": "Titre corrigé",
-                  "lyrics": "Paroles ou 'Chanson non trouvée'",
-                  "translation": "Traduction en francais ou 'Chanson non trouvée'",
+                  "lyrics": "Paroles complètes...",
+                  "translation": "Traduction...",
                   "songType": "Style",
                   "rhythm": "Rythme",
                   "note": "Note historique...",
                   "youtubeLink": "Lien URL"
                 }`;
 
-                const userQuery = `Recherche authentique pour le chant de capoeira : "${formData.title}"`;
-                
+                const userQuery = `Détails authentiques pour le chant de capoeira : "${formData.title}"`;
                 const maQuestion = `${systemPrompt}\n\nRecherche pour : ${userQuery}`;
-                
                 const useGoogleAppsScript = GOOGLE_APPS_SCRIPT_URL && !GOOGLE_APPS_SCRIPT_URL.includes("XXXXX");
 
                 const fetchWithRetry = async (retries = 3) => {
@@ -309,10 +312,7 @@
                                     response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                                        body: JSON.stringify({ 
-                                            prompt: maQuestion,
-                                            model: model 
-                                        })
+                                        body: JSON.stringify({ prompt: maQuestion, model: model })
                                     });
                                 } else {
                                     const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${fallbackEnvApiKey}`;
@@ -336,7 +336,6 @@
                                 }
 
                                 const result = await response.json();
-                                
                                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text || result.text || result.response;
                                 
                                 if (text) {
@@ -348,11 +347,18 @@
                                         const jsonString = cleanText.substring(firstBrace, lastBrace + 1);
                                         const data = JSON.parse(jsonString);
                                         
+                                        const newLyrics = data.lyrics || data.parole || data.paroles || "";
+                                        const newTrans = data.translation || data.traduction || "";
+                                        
+                                        if (newLyrics.trim() === "" && newTrans.trim() === "") {
+                                            throw new Error("L'IA a renvoyé des cases vides par prudence.");
+                                        }
+
                                         setFormData(prev => ({ 
                                             ...prev, 
                                             title: data.title || data.titre || prev.title,
-                                            lyrics: data.lyrics || data.parole || data.paroles || "",
-                                            translation: data.translation || data.traduction || "",
+                                            lyrics: newLyrics || prev.lyrics,
+                                            translation: newTrans || prev.translation,
                                             songType: data.songType || data.type || prev.songType,
                                             rhythm: data.rhythm || data.rythme || prev.rhythm,
                                             note: data.note || prev.note,
@@ -418,21 +424,6 @@
                     setTimeout(() => setToastMessage(""), 2000);
                 } catch(e) { setError("Erreur de suppression."); setShowConfirmDelete(null); }
             }
-
-            const filteredAndSortedSongs = useMemo(() => {
-                let res = songs.filter(s => 
-                    (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                    (s.lyrics || "").toLowerCase().includes(searchTerm.toLowerCase())) &&
-                    (!selectedType || s.songType === selectedType) &&
-                    (!showOnlyFavorites || favorites.includes(s.id))
-                );
-                return res.sort((a, b) => {
-                    if (sortBy === 'title_asc') return (a.title || "").localeCompare(b.title || "");
-                    if (sortBy === 'title_desc') return (b.title || "").localeCompare(a.title || "");
-                    if (sortBy === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-                    return 0;
-                });
-            }, [songs, searchTerm, selectedType, sortBy]);
 
             const handleShare = async (song) => {
                 const text = `🎵 ${song.title}\n\n${song.lyrics}\n\n- Carnet Senzala Villefranche`;
@@ -518,7 +509,7 @@
                             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-in">
                                 <div className="bg-white rounded-[3rem] p-10 max-w-sm w-full text-center shadow-2xl border border-neutral-100">
                                     <h4 className="text-2xl font-display font-bold uppercase mb-4 leading-none tracking-tight">Supprimer ?</h4>
-                                    <p className="text-neutral-500 text-sm mb-10 leading-relaxed font-medium">Cette action supprimera le chant de la collection Senzala.</p>
+                                    <p className="text-neutral-500 text-sm mb-10 leading-relaxed font-medium">Cette action supprimera le chant du carnet collectif Senzala.</p>
                                     <div className="flex gap-4">
                                         <button onClick={() => setShowConfirmDelete(null)} className="flex-1 py-4 bg-neutral-50 rounded-2xl font-bold text-xs uppercase tracking-widest">Annuler</button>
                                         <button onClick={confirmDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-red-200">Supprimer</button>
@@ -574,7 +565,7 @@
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                                     {filteredAndSortedSongs.map(s => (
-                                        <div key={s.id} onClick={() => isSelectionMode ? toggleSelection(s.id) : (setCurrentSong(s), setView('detail'))}
+                                        <div key={s.id} onClick={() => handleCardClick(s)}
                                              className={`bg-white p-8 rounded-[3rem] shadow-sm border-2 transition-all cursor-pointer relative group flex flex-col h-full card-hover ${isSelectionMode && selectedSongs.includes(s.id) ? 'border-brand-yellow bg-brand-yellow/5 scale-[0.97]' : 'border-transparent hover:border-brand-yellow/30'}`}>
                                             <div className="flex justify-between items-start mb-6">
                                                 <div className="flex items-center gap-2">
@@ -623,7 +614,7 @@
                                     <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
                                         <section>
                                             <h4 className="text-[12px] font-black text-brand-brown mb-8 uppercase tracking-[0.3em] flex items-center gap-3">
-                                                <span className="w-3 h-3 rounded-full bg-brand-yellow animate-pulse"></span> Paroles
+                                                <span className="w-3 h-3 rounded-full bg-brand-yellow animate-pulse"></span> Parole
                                             </h4>
                                             <div className="whitespace-pre-wrap text-xl font-bold text-neutral-800 leading-relaxed p-10 rounded-[3rem] bg-brand-yellow/5 border border-brand-yellow/10 shadow-inner">{currentSong.lyrics}</div>
                                         </section>
