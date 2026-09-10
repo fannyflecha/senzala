@@ -42,10 +42,10 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
 
-    <!-- Firebase SDK (Compat mode) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
 
     <style>
         body { background-color: #FFFDF9; color: #1f2937; -webkit-tap-highlight-color: transparent; }
@@ -72,12 +72,7 @@
         .animate-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        .veneer-title {
-            text-transform: uppercase;
-            letter-spacing: -0.02em;
-            line-height: 0.9;
-        }
-
+        .veneer-title { text-transform: uppercase; letter-spacing: -0.02em; line-height: 0.9; }
         input, select, textarea { font-size: 16px !important; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -85,27 +80,24 @@
 <body>
     <div id="fallback-screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; text-align: center; font-family: sans-serif; background-color: #FFFDF9;">
         <h1 style="color: #F7784A; font-size: 2.5rem; margin-bottom: 1rem; text-transform: uppercase; font-weight: 800; letter-spacing: -0.05em;">Senzala</h1>
-        <p id="fallback-text" style="color: #9F512A; max-width: 400px; line-height: 1.5; font-weight: 600;">Chargement sécurisé...</p>
+        <p style="color: #9F512A; max-width: 400px; line-height: 1.5; font-weight: 600;">Chargement sécurisé...</p>
     </div>
 
     <div id="root"></div>
 
-    <script type="text/babel">
+    <script type="text/babel" data-type="module">
         /** @jsx React.createElement */
         /** @jsxFrag React.Fragment */
 
-        // --- CONFIGURATION IA SÉCURISÉE (VIA GOOGLE APPS SCRIPT) ---
-        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/XXXXX/exec"; 
-        const fallbackEnvApiKey = ""; 
-        
+        // --- CONFIGURATION IA ---
+        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyxc48_A-pg9JRW_Kjci5D4ROY3a6FYOMlUocWvadnrP3okBMh4KHh4l_n-s10uOhDEsg/exec"; 
+        const envApiKey = ""; 
+
+        // MISE À JOUR : Modèles de production officiels (Septembre 2026)
         const MODELS_TO_TEST = [
-            "gemini-2.5-flash-preview-09-2025",
-            "gemini-2.5-flash",
-            "gemini-3-flash",
-            "gemini-2.5-flash-lite",
-            "gemini-3.1-flash-lite",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash"
+            "gemini-3.5-flash",
+            "gemini-3.8-flash",
+            "gemini-2.5-flash"
         ];
 
         const { useState, useEffect, useMemo } = React;
@@ -124,17 +116,12 @@
         let auth = null;
 
         try {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(personalFirebaseConfig);
-            }
+            if (!firebase.apps.length) firebase.initializeApp(personalFirebaseConfig);
             db = firebase.firestore();
             auth = firebase.auth();
-        } catch (e) {
-            console.error("Firebase Init Error:", e);
-        }
+        } catch (e) { console.error("Firebase Init Error:", e); }
 
         const dbCollectionName = "songs"; 
-
         const SONG_TYPES = ["Corrido", "Ladainha", "Chula / Louvação", "Quadra", "Maculelê", "Puxada de Rede", "Samba de Roda", "Autre"];
         const RHYTHMS = ["Angola", "Benguela", "São Bento Grande", "Iuna", "Regional", "Libre", "Puxada"];
 
@@ -151,9 +138,9 @@
                 check: <polyline points="20 6 9 17 4 12"></polyline>,
                 back: <><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></>,
                 alert: <><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></>,
-                save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></>,
                 sort: <><line x1="3" y1="6" x2="15" y2="6"></line><line x1="3" y1="12" x2="11" y2="12"></line><line x1="3" y1="18" x2="13" y2="18"></line><polyline points="16 14 20 18 24 14"></polyline><line x1="20" y1="6" x2="20" y2="18"></line></>,
-                star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                star: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>,
+                starFilled: <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"></path>
             };
             return (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -181,51 +168,33 @@
             const [selectedSongs, setSelectedSongs] = useState([]);
             const [showConfirmDelete, setShowConfirmDelete] = useState(null);
             
-            // --- GESTION DES FAVORIS LOCAUX ---
-            const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
             const [favorites, setFavorites] = useState(() => {
-                try {
-                    const saved = localStorage.getItem('senzala_favorites');
-                    return saved ? JSON.parse(saved) : [];
-                } catch(e) { return []; }
+                try { return JSON.parse(localStorage.getItem('senzala_favorites')) || []; }
+                catch (e) { return []; }
             });
+            const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
             useEffect(() => {
                 localStorage.setItem('senzala_favorites', JSON.stringify(favorites));
             }, [favorites]);
-
-            const toggleFavorite = (e, id) => {
-                e.stopPropagation(); // Évite d'ouvrir le chant ou de le cocher quand on clique sur l'étoile
-                setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
-            };
-
-            const [formData, setFormData] = useState({ title: '', lyrics: '', translation: '', rhythm: '', note: '', songType: '', youtubeLink: '' });
+            
+            const [formData, setFormData] = useState({ title: '', lyrics: '', translation: '', rhythm: '', note: '', songType: '', youtubeLink: '', aiKey: localStorage.getItem('senzala_ai_key') || '' });
             const [aiLoading, setAiLoading] = useState(false);
             const [aiStatus, setAiStatus] = useState("");
             const [toastMessage, setToastMessage] = useState("");
 
-            // --- AUTHENTIFICATION ---
             useEffect(() => {
                 const initAuth = async () => {
                     if (!auth) return;
-                    try {
-                        await auth.signInAnonymously();
-                    } catch (e) {
-                        console.error("Auth error", e);
-                    }
+                    try { await auth.signInAnonymously(); } catch (e) { console.error("Auth error", e); }
                 };
                 initAuth();
-                const unsubscribe = auth.onAuthStateChanged(u => { 
-                    setUser(u); 
-                    if(u) setLoading(false); 
-                });
-                return () => unsubscribe();
+                const unsubscribe = auth?.onAuthStateChanged(u => { setUser(u); });
+                return () => { if (unsubscribe) unsubscribe(); };
             }, []);
 
-            // --- SYNCHRONISATION DES CHANTS ---
             useEffect(() => {
                 if (!db) return; 
-                
                 const songsCollection = db.collection(dbCollectionName);
                 const unsubscribe = songsCollection.onSnapshot(
                     snap => {
@@ -233,16 +202,16 @@
                         setSongs(data);
                         setLoading(false);
                     },
-                    err => { 
-                        console.error("Firestore error:", err);
-                        setError(`Connexion Firebase perdue ou bloquée : ${err.message}`); 
-                        setLoading(false); 
-                    }
+                    err => { setError(`Erreur base de données : ${err.message}`); setLoading(false); }
                 );
                 return () => unsubscribe();
             }, []);
 
-            // --- GESTION DES CLICS ---
+            const toggleFavorite = (e, id) => {
+                e.stopPropagation();
+                setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+            };
+
             const handleCardClick = (song) => {
                 if (isSelectionMode) {
                     setSelectedSongs(prev => prev.includes(song.id) ? prev.filter(id => id !== song.id) : [...prev, song.id]);
@@ -252,13 +221,12 @@
                 }
             };
 
-            // --- FILTRAGE ET TRI ---
             const filteredAndSortedSongs = useMemo(() => {
                 let res = songs.filter(s => 
-                    (s.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    ((s.title || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
                     (s.lyrics || "").toLowerCase().includes(searchTerm.toLowerCase())) &&
                     (!selectedType || s.songType === selectedType) &&
-                    (!showOnlyFavorites || favorites.includes(s.id))
+                    (!showFavoritesOnly || favorites.includes(s.id))
                 );
                 return res.sort((a, b) => {
                     if (sortBy === 'title_asc') return (a.title || "").localeCompare(b.title || "");
@@ -266,12 +234,26 @@
                     if (sortBy === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
                     return 0;
                 });
-            }, [songs, searchTerm, selectedType, sortBy, showOnlyFavorites, favorites]);
+            }, [songs, searchTerm, selectedType, sortBy, showFavoritesOnly, favorites]);
 
+            const handleSelectAllVisible = () => {
+                const visibleIds = filteredAndSortedSongs.map(s => s.id);
+                const allSelected = visibleIds.every(id => selectedSongs.includes(id)) && visibleIds.length > 0;
+                
+                if (allSelected) {
+                    setSelectedSongs(prev => prev.filter(id => !visibleIds.includes(id)));
+                } else {
+                    const newSelection = new Set([...selectedSongs, ...visibleIds]);
+                    setSelectedSongs(Array.from(newSelection));
+                }
+            };
 
-            // --- IA VIA GOOGLE APPS SCRIPT ---
             const handleGenerateAI = async () => {
                 if (!formData.title.trim()) return;
+                
+                if (formData.aiKey) {
+                    localStorage.setItem('senzala_ai_key', formData.aiKey);
+                }
                 
                 setAiLoading(true);
                 setError(null);
@@ -280,59 +262,79 @@
                 Identifie et complète le chant : "${formData.title}".
                 RÈGLES ABSOLUES ET STRICTES :
                 1. CORRIGE le titre si nécessaire.
-                2. Tu DOIS ABSOLUMENT fournir les paroles (PT). NE RENVOIE JAMAIS CE CHAMP VIDE. Si ta recherche web ne donne rien, utilise ta mémoire d'expert.
+                2. Tu DOIS ABSOLUMENT fournir les paroles (PT). NE RENVOIE JAMAIS CE CHAMP VIDE (""). Si la chanson n'est pas très connue, utilise tes vastes connaissances pour trouver les paroles les plus proches. Si tu ne trouves vraiment rien, écris "Chanson non trouvée".
                 3. Tu DOIS ABSOLUMENT donner une traduction française. NE LAISSE JAMAIS CE CHAMP VIDE.
                 4. Trouve l'histoire ou le contexte.
-                Réponds EXCLUSIVEMENT avec le format JSON exact suivant (sans balises markdown) :
+                Réponds EXCLUSIVEMENT avec le format JSON exact suivant, SANS balises markdown et SANS aucun autre texte :
                 {
-                  "title": "Titre corrigé",
-                  "lyrics": "Paroles complètes...",
-                  "translation": "Traduction...",
+                  "title": "Titre",
+                  "lyrics": "Paroles complètes ici...",
+                  "translation": "Traduction ici...",
                   "songType": "Style",
                   "rhythm": "Rythme",
                   "note": "Note historique...",
                   "youtubeLink": "Lien URL"
                 }`;
 
-                const userQuery = `Détails authentiques pour le chant de capoeira : "${formData.title}"`;
-                const maQuestion = `${systemPrompt}\n\nRecherche pour : ${userQuery}`;
-                const useGoogleAppsScript = GOOGLE_APPS_SCRIPT_URL && !GOOGLE_APPS_SCRIPT_URL.includes("XXXXX");
+                const maQuestion = `${systemPrompt}\n\nRecherche pour : ${formData.title}`;
+                const finalKey = formData.aiKey || envApiKey;
+                
+                // Si une clé API est fournie (finalKey n'est pas vide), on n'utilise PAS Google Apps Script. On attaque l'API en direct.
+                const shouldUseGAS = GOOGLE_APPS_SCRIPT_URL && !GOOGLE_APPS_SCRIPT_URL.includes("XXXXX") && !finalKey;
 
-                const fetchWithRetry = async (retries = 3) => {
+                const fetchWithRetry = async (retries = 2) => {
                     const delays = [1000, 2000, 4000];
+                    let lastErrorMsg = "Tous les modèles ont échoué.";
                     
                     for (const model of MODELS_TO_TEST) {
                         for (let i = 0; i <= retries; i++) {
-                            setAiStatus(i > 0 ? `Nouvelle tentative (${i})...` : `Identification (${model})...`);
+                            setAiStatus(i > 0 ? `Nouvelle tentative (${i})...` : `Recherche via ${model}...`);
                             
                             try {
                                 let response;
                                 
-                                if (useGoogleAppsScript) {
+                                if (shouldUseGAS) {
                                     response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                                        body: JSON.stringify({ prompt: maQuestion, model: model })
+                                        body: JSON.stringify({ 
+                                            prompt: maQuestion,
+                                            model: model
+                                        })
                                     });
                                 } else {
-                                    const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${fallbackEnvApiKey}`;
+                                    if (!finalKey) throw new Error("Clé API manquante. Renseignez-la dans le formulaire.");
+                                    
+                                    // Utilisation de l'API standard directe avec la structure native JSON
+                                    const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${finalKey}`;
                                     response = await fetch(directUrl, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
-                                            contents: [{ parts: [{ text: maQuestion }] }],
-                                            tools: [{ "google_search": {} }]
+                                            contents: [{ parts: [{ text: `Recherche d'informations précises et complètes pour le chant de capoeira: "${formData.title}"` }] }],
+                                            systemInstruction: { parts: [{ text: systemPrompt }] },
+                                            generationConfig: { responseMimeType: "application/json" }
                                         })
                                     });
                                 }
 
                                 if (!response.ok) {
+                                    const errorData = await response.json().catch(() => ({}));
+                                    const errorMessage = errorData?.error?.message || `HTTP ${response.status}`;
+                                    lastErrorMsg = `Erreur API (${model}): ${errorMessage}`;
+                                    
                                     if (response.status === 429 && i < retries) {
                                         await new Promise(r => setTimeout(r, delays[i]));
                                         continue; 
                                     }
-                                    if (response.status === 404) break; 
-                                    throw new Error(`HTTP ${response.status}`);
+                                    if (response.status === 400 && errorMessage.toLowerCase().includes("api key")) {
+                                        throw new Error(`Clé API invalide : ${errorMessage}`); 
+                                    }
+                                    if (response.status === 404) {
+                                        break; // Ce modèle n'existe pas, on sort de la boucle de retry pour tester le modèle suivant
+                                    }
+                                    // Pour les autres erreurs HTTP, on passe au modèle suivant
+                                    break;
                                 }
 
                                 const result = await response.json();
@@ -351,7 +353,7 @@
                                         const newTrans = data.translation || data.traduction || "";
                                         
                                         if (newLyrics.trim() === "" && newTrans.trim() === "") {
-                                            throw new Error("L'IA a renvoyé des cases vides par prudence.");
+                                            throw new Error("L'IA a renvoyé des champs vides par erreur. Nouvelle tentative.");
                                         }
 
                                         setFormData(prev => ({ 
@@ -368,21 +370,28 @@
                                     }
                                 }
                             } catch (e) {
-                                if (i === retries) {
-                                    console.warn(`Le modèle ${model} a échoué. Passage au modèle suivant.`);
-                                    break; 
+                                lastErrorMsg = e.message;
+                                if (lastErrorMsg === "Failed to fetch") {
+                                    lastErrorMsg = "Échec réseau (Failed to fetch). Vérifiez votre connexion internet ou votre clé API.";
                                 }
-                                await new Promise(r => setTimeout(r, delays[i]));
+                                // Si c'est une erreur fatale de clé API, on arrête complètement
+                                if (lastErrorMsg.includes('Clé API invalide')) {
+                                    throw new Error(lastErrorMsg);
+                                }
+                                // Si on est à la dernière tentative, on passe au modèle suivant (ne rien jeter ici)
+                                if (i < retries) {
+                                    await new Promise(r => setTimeout(r, delays[i]));
+                                }
                             }
                         }
                     }
-                    throw new Error("Tous les modèles testés ont échoué ou le script est inaccessible.");
+                    throw new Error(lastErrorMsg);
                 };
 
                 try {
                     await fetchWithRetry();
                 } catch (e) {
-                    setError(`L'IA n'a pas pu répondre (${e.message}). Si vous utilisez Apps Script, vérifiez son déploiement.`);
+                    setError(`Erreur IA : ${e.message}`);
                 } finally {
                     setAiLoading(false);
                     setAiStatus("");
@@ -400,15 +409,13 @@
                     };
                     const docId = dataToSave.id;
                     if (docId) delete dataToSave.id; 
+                    delete dataToSave.aiKey; // On ne sauvegarde pas la clé API dans Firestore
 
-                    if (docId) {
-                        await db.collection(dbCollectionName).doc(docId).set(dataToSave, { merge: true });
-                    } else {
-                        await db.collection(dbCollectionName).add(dataToSave);
-                    }
+                    if (docId) await db.collection(dbCollectionName).doc(docId).set(dataToSave, { merge: true });
+                    else await db.collection(dbCollectionName).add(dataToSave);
                     
                     setView('list');
-                    setFormData({ title:'', lyrics:'', translation:'', rhythm:'', note:'', songType:'', youtubeLink:'' });
+                    setFormData(prev => ({ title:'', lyrics:'', translation:'', rhythm:'', note:'', songType:'', youtubeLink:'', aiKey: prev.aiKey }));
                     setToastMessage("Chant enregistré !");
                     setTimeout(() => setToastMessage(""), 2000);
                 } catch (err) { setError("Erreur de sauvegarde."); }
@@ -422,6 +429,7 @@
                     setShowConfirmDelete(null);
                     setToastMessage("Chant supprimé.");
                     setTimeout(() => setToastMessage(""), 2000);
+                    setFavorites(prev => prev.filter(f => f !== showConfirmDelete));
                 } catch(e) { setError("Erreur de suppression."); setShowConfirmDelete(null); }
             }
 
@@ -435,7 +443,7 @@
             if (loading) return (
                 <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFFDF9] p-6 text-center text-brand-brown">
                     <div className="loader mb-6 shadow-sm"></div>
-                    <p className="font-display tracking-[0.2em] uppercase text-sm animate-pulse text-brand-coral">Connexion Acervo Senzala...</p>
+                    <p className="font-display tracking-[0.2em] uppercase text-sm animate-pulse text-brand-coral">Connexion Acervo...</p>
                 </div>
             );
 
@@ -444,7 +452,7 @@
                 return (
                     <div className="bg-white min-h-screen p-8 md:p-16 text-black font-sans">
                         <div className="no-print flex gap-4 mb-12 justify-center">
-                            <button onClick={() => setView('list')} className="px-6 py-2 border-2 border-neutral-200 rounded-2xl font-bold text-xs hover:bg-neutral-50 transition-colors">Fermer</button>
+                            <button onClick={() => setView('list')} className="px-6 py-2 border-2 border-neutral-100 rounded-2xl font-bold text-xs hover:bg-neutral-50 transition-colors">Fermer</button>
                             <button onClick={() => window.print()} className="px-6 py-2 brand-gradient text-white rounded-2xl font-bold shadow-lg text-xs transition-opacity hover:opacity-90">Imprimer PDF</button>
                         </div>
                         <div className="max-w-4xl mx-auto border-b-8 border-brand-yellow pb-8 mb-16 text-center">
@@ -485,7 +493,7 @@
                                 <button onClick={() => setIsSelectionMode(!isSelectionMode)} className={`px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${isSelectionMode ? 'bg-black/30 text-brand-yellow shadow-inner' : 'bg-white/10 hover:bg-white/20'}`}>
                                     {isSelectionMode ? 'Quitter' : 'Livret'}
                                 </button>
-                                <button onClick={() => { setFormData({title:'', lyrics:'', translation:'', rhythm:'', note:'', songType:'', youtubeLink:''}); setView('form'); }} className="bg-white text-brand-coral px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase shadow-lg active:scale-95 transition-all">Nouveau</button>
+                                <button onClick={() => { setFormData(prev => ({title:'', lyrics:'', translation:'', rhythm:'', note:'', songType:'', youtubeLink:'', aiKey: prev.aiKey})); setView('form'); setIsSelectionMode(false); }} className="bg-white text-brand-coral px-6 py-2.5 rounded-2xl text-[11px] font-black uppercase shadow-lg active:scale-95 transition-all">Nouveau</button>
                             </div>
                         </div>
                     </header>
@@ -512,7 +520,7 @@
                                     <p className="text-neutral-500 text-sm mb-10 leading-relaxed font-medium">Cette action supprimera le chant du carnet collectif Senzala.</p>
                                     <div className="flex gap-4">
                                         <button onClick={() => setShowConfirmDelete(null)} className="flex-1 py-4 bg-neutral-50 rounded-2xl font-bold text-xs uppercase tracking-widest">Annuler</button>
-                                        <button onClick={confirmDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-red-200">Supprimer</button>
+                                        <button onClick={confirmDelete} className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-red-200 transition-transform active:scale-95">Supprimer</button>
                                     </div>
                                 </div>
                             </div>
@@ -521,9 +529,9 @@
                         {view === 'list' && (
                             <div className="space-y-8">
                                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-white p-4 rounded-[2.5rem] shadow-sm border border-neutral-100">
-                                    <div className="md:col-span-4 relative">
-                                        <Icon name="search" className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-yellow w-5 h-5" />
-                                        <input type="text" placeholder="Rechercher titre ou paroles..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-14 pr-5 py-4 rounded-2xl bg-neutral-50 border-none outline-none focus:ring-4 focus:ring-brand-yellow/10 font-medium text-base transition-all" />
+                                    <div className="md:col-span-4 relative flex items-center">
+                                        <Icon name="search" className="absolute left-5 text-brand-yellow w-5 h-5 pointer-events-none" />
+                                        <input type="text" placeholder="Rechercher..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-14 pr-5 py-4 rounded-2xl bg-neutral-50 border-none outline-none focus:ring-4 focus:ring-brand-yellow/10 font-medium text-base transition-all" />
                                     </div>
                                     <div className="md:col-span-3">
                                         <select value={selectedType} onChange={e => setSelectedType(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-neutral-50 border-none font-bold text-brand-brown text-xs uppercase tracking-[0.2em] outline-none cursor-pointer appearance-none text-center">
@@ -531,11 +539,8 @@
                                             {SONG_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                         </select>
                                     </div>
-                                    <div className="md:col-span-5 flex gap-2">
-                                        <button onClick={() => setShowOnlyFavorites(!showOnlyFavorites)} className={`flex-1 px-4 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-2 ${showOnlyFavorites ? 'bg-brand-coral/10 text-brand-coral border border-brand-coral/20' : 'bg-neutral-50 text-neutral-400 border border-transparent'}`}>
-                                            <Icon name="star" className={`w-4 h-4 ${showOnlyFavorites ? 'fill-current' : ''}`} /> Favoris
-                                        </button>
-                                        <div className="relative flex-1">
+                                    <div className="md:col-span-3">
+                                        <div className="relative">
                                             <Icon name="sort" className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-yellow w-4 h-4 pointer-events-none" />
                                             <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full pl-12 pr-6 py-4 rounded-2xl bg-neutral-50 border-none font-bold text-neutral-400 text-[10px] uppercase tracking-[0.2em] outline-none cursor-pointer appearance-none">
                                                 <option value="title_asc">Titre A-Z</option>
@@ -544,46 +549,67 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div className="md:col-span-2">
+                                        <button onClick={() => setShowFavoritesOnly(!showFavoritesOnly)} className={`w-full h-full flex items-center justify-center gap-2 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${showFavoritesOnly ? 'bg-brand-yellow/20 text-brand-brown' : 'bg-neutral-50 text-neutral-400 hover:bg-neutral-100'}`}>
+                                            <Icon name={showFavoritesOnly ? "starFilled" : "star"} className="w-4 h-4" />
+                                            {showFavoritesOnly ? "Favoris" : "Tous"}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {isSelectionMode && (
-                                    <div className="brand-gradient p-6 sm:p-8 rounded-[3rem] flex flex-col lg:flex-row justify-between items-center gap-6 shadow-2xl text-white animate-in">
-                                        <div className="flex items-center gap-5 w-full lg:w-auto">
-                                            <span className="bg-white text-brand-coral w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-display font-bold text-2xl sm:text-3xl shadow-inner flex-shrink-0">{selectedSongs.length}</span>
-                                            <div className="veneer-title text-white text-left">
-                                                <p className="font-bold text-lg sm:text-xl uppercase tracking-tight leading-none">Sélection active</p>
-                                                <p className="text-[9px] sm:text-[10px] uppercase tracking-widest opacity-80 mt-1">Générez un PDF avec les chants cochés</p>
+                                    <div className="brand-gradient p-8 rounded-[3rem] flex flex-col sm:flex-row justify-between items-center gap-6 shadow-2xl text-white animate-in">
+                                        <div className="flex items-center gap-5">
+                                            <span className="bg-white text-brand-coral w-14 h-14 rounded-full flex items-center justify-center font-display font-bold text-3xl shadow-inner text-brand-coral">{selectedSongs.length}</span>
+                                            <div className="veneer-title text-white text-center md:text-left">
+                                                <p className="font-bold text-lg uppercase tracking-tight leading-none">Chants sélectionnés</p>
+                                                <p className="text-[10px] uppercase tracking-widest opacity-80 mt-1">Générez un PDF avec les chants cochés</p>
                                             </div>
                                         </div>
-                                        <div className="flex flex-wrap gap-2 w-full lg:w-auto justify-end">
-                                            <button onClick={() => setSelectedSongs(filteredAndSortedSongs.map(s => s.id))} className="flex-1 sm:flex-none bg-white/20 hover:bg-white/30 text-white px-5 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all">Tout Cocher</button>
-                                            <button onClick={() => setSelectedSongs([])} className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white px-5 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all">Vider</button>
-                                            <button onClick={() => setView('print')} disabled={selectedSongs.length === 0} className="w-full sm:w-auto bg-neutral-900 text-brand-yellow px-8 py-3.5 rounded-2xl font-black text-[11px] uppercase shadow-xl disabled:opacity-30 tracking-widest transition-all">Créer le PDF</button>
+                                        <div className="flex flex-wrap justify-center gap-3 w-full sm:w-auto">
+                                            <button onClick={handleSelectAllVisible} className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-[1rem] font-bold text-[10px] uppercase tracking-widest transition-all">
+                                                Tout cocher / décocher
+                                            </button>
+                                            <button onClick={() => setSelectedSongs([])} className="px-6 py-3 bg-black/20 hover:bg-black/30 text-white rounded-[1rem] font-bold text-[10px] uppercase tracking-widest transition-all">
+                                                Vider
+                                            </button>
+                                            <button onClick={() => setView('print')} disabled={selectedSongs.length === 0} className="px-10 py-3 bg-neutral-900 text-brand-yellow rounded-[1rem] font-black text-xs uppercase shadow-xl disabled:opacity-30 tracking-widest transition-all">
+                                                Générer PDF
+                                            </button>
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                                    {filteredAndSortedSongs.map(s => (
+                                    {filteredAndSortedSongs.map(s => {
+                                        const isFav = favorites.includes(s.id);
+                                        return (
                                         <div key={s.id} onClick={() => handleCardClick(s)}
                                              className={`bg-white p-8 rounded-[3rem] shadow-sm border-2 transition-all cursor-pointer relative group flex flex-col h-full card-hover ${isSelectionMode && selectedSongs.includes(s.id) ? 'border-brand-yellow bg-brand-yellow/5 scale-[0.97]' : 'border-transparent hover:border-brand-yellow/30'}`}>
                                             <div className="flex justify-between items-start mb-6">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="px-3 py-1 bg-brand-yellow/10 text-brand-brown text-[9px] font-black uppercase tracking-[0.2em] rounded-lg border border-brand-yellow/20">{s.songType}</span>
-                                                    <button onClick={(e) => toggleFavorite(e, s.id)} className={`p-1.5 rounded-full transition-all ${favorites.includes(s.id) ? 'text-brand-coral bg-brand-coral/10' : 'text-neutral-300 hover:bg-neutral-100 hover:text-brand-coral'}`} title="Ajouter aux favoris">
-                                                        <Icon name="star" className={`w-4 h-4 ${favorites.includes(s.id) ? 'fill-current' : ''}`} />
-                                                    </button>
+                                                <span className="px-3 py-1 bg-brand-yellow/10 text-brand-brown text-[9px] font-black uppercase tracking-[0.2em] rounded-lg border border-brand-yellow/20">{s.songType}</span>
+                                                <div className="flex gap-2">
+                                                    {!isSelectionMode && (
+                                                        <button onClick={(e) => toggleFavorite(e, s.id)} className={`p-1.5 rounded-full transition-colors ${isFav ? 'text-brand-yellow bg-brand-yellow/10' : 'text-neutral-300 hover:bg-neutral-50'}`}>
+                                                            <Icon name={isFav ? "starFilled" : "star"} className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+                                                    {isSelectionMode && (
+                                                        <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shadow-inner transition-colors ${selectedSongs.includes(s.id) ? 'bg-brand-yellow border-brand-yellow' : 'bg-white border-neutral-200'}`}>
+                                                            {selectedSongs.includes(s.id) && <Icon name="check" className="w-5 h-5 text-white"/>}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {isSelectionMode && (
-                                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shadow-inner transition-colors ${selectedSongs.includes(s.id) ? 'bg-brand-yellow border-brand-yellow' : 'bg-white border-neutral-200'}`}>
-                                                        {selectedSongs.includes(s.id) && <Icon name="check" className="w-5 h-5 text-white"/>}
-                                                    </div>
-                                                )}
                                             </div>
                                             <h3 className="text-2xl font-display font-bold text-neutral-800 line-clamp-2 uppercase leading-[1] mb-3 group-hover:text-brand-coral transition-colors veneer-title tracking-tight leading-none">{s.title}</h3>
                                             <p className="text-[13px] text-neutral-400 line-clamp-3 italic font-medium mt-auto leading-relaxed">{s.lyrics}</p>
                                         </div>
-                                    ))}
+                                    )})}
+                                    {filteredAndSortedSongs.length === 0 && !loading && (
+                                        <div className="col-span-full py-20 text-center text-neutral-400 font-bold uppercase tracking-widest text-xs">
+                                            Aucun chant trouvé.
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -597,15 +623,17 @@
                                                 <span className="px-5 py-2 bg-brand-coral text-white text-[10px] font-black uppercase rounded-xl shadow-md tracking-widest">{currentSong.songType}</span>
                                                 <span className="px-5 py-2 bg-white text-brand-brown border border-neutral-200 text-[10px] font-black uppercase rounded-xl shadow-sm">{currentSong.rhythm}</span>
                                             </div>
-                                            <h2 className="text-5xl md:text-8xl font-display font-bold text-neutral-900 uppercase tracking-tighter mb-4 veneer-title text-balance leading-none">{currentSong.title}</h2>
+                                            <h2 className="text-5xl md:text-8xl font-display font-bold text-neutral-900 uppercase tracking-tighter mb-4 veneer-title text-balance leading-none flex items-center gap-4">
+                                                {currentSong.title}
+                                                <button onClick={(e) => toggleFavorite(e, currentSong.id)} className={`transition-colors ${favorites.includes(currentSong.id) ? 'text-brand-yellow' : 'text-neutral-200 hover:text-brand-yellow/50'}`}>
+                                                    <Icon name={favorites.includes(currentSong.id) ? "starFilled" : "star"} className="w-10 h-10 md:w-16 md:h-16" />
+                                                </button>
+                                            </h2>
                                         </div>
                                         <div className="flex gap-3 bg-white p-3 rounded-[2rem] shadow-xl border border-neutral-100 self-end md:self-start">
-                                            <button onClick={(e) => toggleFavorite(e, currentSong.id)} className={`p-4 rounded-2xl transition-colors ${favorites.includes(currentSong.id) ? 'text-brand-coral bg-brand-coral/10' : 'text-neutral-400 hover:bg-neutral-50'}`} title="Favori">
-                                                <Icon name="star" className={`w-6 h-6 ${favorites.includes(currentSong.id) ? 'fill-current' : ''}`} />
-                                            </button>
                                             <button onClick={() => handleShare(currentSong)} className="p-4 text-brand-yellow hover:bg-brand-yellow/10 rounded-2xl transition-colors" title="Partager"><Icon name="share" className="w-6 h-6" /></button>
                                             {currentSong.youtubeLink && <a href={currentSong.youtubeLink} target="_blank" className="p-4 text-red-600 hover:bg-red-50 rounded-2xl transition-colors" title="Lien"><Icon name="youtube" className="w-6 h-6" /></a>}
-                                            <button onClick={() => { setFormData(currentSong); setView('form'); }} className="p-4 text-brand-purple hover:bg-brand-purple/5 rounded-2xl transition-colors" title="Modifier"><Icon name="edit" className="w-6 h-6" /></button>
+                                            <button onClick={() => { setFormData({...currentSong, aiKey: formData.aiKey}); setView('form'); }} className="p-4 text-brand-purple hover:bg-brand-purple/5 rounded-2xl transition-colors" title="Modifier"><Icon name="edit" className="w-6 h-6" /></button>
                                             <button onClick={() => setShowConfirmDelete(currentSong.id)} className="p-4 text-neutral-300 hover:text-red-500 rounded-2xl transition-colors" title="Supprimer"><Icon name="trash" className="w-6 h-6" /></button>
                                         </div>
                                     </div>
@@ -655,10 +683,16 @@
 
                                         <div className="brand-gradient p-10 rounded-[3.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group">
                                             <div className="relative z-10 flex-1 text-center md:text-left">
-                                                <h4 className="font-display font-bold text-4xl text-white tracking-wide flex items-center justify-center md:justify-start gap-3 veneer-title leading-none text-white text-balance leading-none uppercase font-bold">Lancement de l'IA <span className="animate-pulse text-brand-yellow">✨</span></h4>
+                                                <h4 className="font-display font-bold text-4xl text-white tracking-wide flex items-center justify-center md:justify-start gap-3 veneer-title text-balance leading-none uppercase font-bold">Lancement de l'IA <span className="animate-pulse text-brand-yellow">✨</span></h4>
+                                                {aiStatus && <p className="text-[14px] font-bold text-brand-yellow mt-4 uppercase tracking-widest">{aiStatus}</p>}
+                                                {!aiStatus && (
+                                                    <div className="mt-4">
+                                                        <input type="text" value={formData.aiKey} onChange={e => setFormData({...formData, aiKey: e.target.value})} placeholder="Collez votre clé API Gemini ici..." className="w-full p-3 bg-white/20 rounded-xl outline-none text-xs font-medium text-white placeholder-white/50 border border-white/20 focus:border-white/50 transition-all" />
+                                                    </div>
+                                                )}
                                             </div>
-                                            <button type="button" onClick={handleGenerateAI} disabled={aiLoading || !formData.title} className="bg-white text-brand-coral px-12 py-5 rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 disabled:opacity-50 min-w-[200px] transition-all hover:scale-105">
-                                                {aiLoading ? <span className="flex items-center gap-3"><div className="loader border-brand-coral"></div>{aiStatus}</span> : "C'est parti !!!"}
+                                            <button type="button" onClick={handleGenerateAI} disabled={aiLoading || !formData.title} className="bg-white text-brand-coral px-12 py-5 rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 disabled:opacity-50 min-w-[200px] transition-all hover:scale-105 flex items-center justify-center min-h-[60px]">
+                                                {aiLoading ? <div className="loader border-brand-coral"></div> : "C'est parti !!!"}
                                             </button>
                                         </div>
                                         
